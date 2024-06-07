@@ -1,0 +1,46 @@
+#Stage 1 Create all dependencies
+FROM node:21-alpine3.19 as dependencies
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+COPY package-lock*.json ./
+
+RUN npm install
+
+#Stage 2 Generate Builder - Construct the application
+
+FROM node:21-alpine3.19 as builder
+ARG ORDER_DATABASE_URL
+ENV DATABASE_URL=$ORDER_DATABASE_URL
+WORKDIR /usr/src/app
+
+#copy node modules
+#Copy from stage.  origin -> destination
+COPY --from=dependencies /usr/src/app/node_modules ./node_modules
+#Copy all code
+COPY . .
+#RUN npm run test
+#PROD ALWAYS RUN TEST AFTER DEPLOY 
+
+RUN npx prisma migrate deploy
+RUN npx prisma generate
+RUN npm run build
+#Clean node_module only production
+RUN npm ci -f --only=production && npm cache clean --force
+
+#Stage 3 Create final image
+FROM node:21-alpine3.19 as production
+
+WORKDIR /usr/src/app
+
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY --from=builder /usr/src/app/dist ./dist
+
+ENV NODE_ENV=production
+#create other user to execute the rest of the code
+USER node
+
+EXPOSE 3000
+
+CMD [ "node" , "dist/main.js" ]
