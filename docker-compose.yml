@@ -13,5 +13,5 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=amores123
-      - POSTGRES_DB=orders_db
+      - POSTGRES_DB=orders_dbs
 
