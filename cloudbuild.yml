@@ -18,4 +18,4 @@ availableSecrets:
   secretManager:
   - versionName: projects/720618450185/secrets/orders_database_url/versions/1 #copy resource name en Google Cloud Secret Manager
     env: 'DATABASE_URL'
-    
+  
